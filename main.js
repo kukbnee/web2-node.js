@@ -2,6 +2,8 @@ var http = require('http');
 var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
+var path = require('path');
+
 var template = require('./lib/template.js');
 
 var app = http.createServer((request, response)=> {
@@ -20,7 +22,9 @@ var app = http.createServer((request, response)=> {
   
   const resHTML = (title, pCrTemp, pUpTemp, pDelTemp, pDescription)=> {
     fs.readdir('./data', 'utf8', (err, files)=> {
-      fs.readFile('./data/' + queryData.id, 'utf8', (err, description)=> {
+      // var filteredId = path.parse(queryData.id).base;
+      var filteredId = path.parse(!queryData.id?'':queryData.id).base;
+      fs.readFile('./data/' + filteredId, 'utf8', (err, description)=> {
         var html = template.html(title, template.list(files), pCrTemp, pUpTemp, pDelTemp, `<h2>${title}</h2>${!pDescription?description:pDescription}`);
         response.writeHead(200);
         response.end(html);
@@ -69,7 +73,8 @@ var app = http.createServer((request, response)=> {
     }); 
   }else if(pathName === '/update') {
     var title = queryData.id;
-    fs.readFile('./data/' + title, 'utf8', (err, description)=> {
+    var filteredId = path.parse(!queryData.id?'':queryData.id).base;
+    fs.readFile('./data/' + filteredId, 'utf8', (err, description)=> {
       var $formHTML = `
         <form action="http://localhost:3000/update_process" method="post">
           <input type="hidden" name="id" value="${title}"/>
