@@ -3,6 +3,15 @@ var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
 
+var template = {
+  html: ()=> {
+
+  },
+  list: ()=> {
+    
+  }
+}
+
 const templeteHTML = (title, $fileList, $create, $update, $delete, body)=> {
   return `
     <!doctype html>
