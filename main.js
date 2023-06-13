@@ -2,49 +2,9 @@ var http = require('http');
 var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
+var path = require('path');
 
-var template = {
-  html: ()=> {
-
-  },
-  list: ()=> {
-    
-  }
-}
-
-const templeteHTML = (title, $fileList, $create, $update, $delete, body)=> {
-  return `
-    <!doctype html>
-    <html>
-    <head>
-      <title>WEB - ${title}</title>
-      <meta charset="utf-8">
-    </head>
-    <body>
-      <h1><a href="/">WEB</a></h1>
-      ${$fileList}
-      ${$create}
-      ${$update}
-      ${$delete}
-      ${body}
-      
-    </body>
-    </html>
-  `;
-};
-
-const templeteList = (files)=> {
-
-  var $fileList = "<ol>";
-  
-  for(var i=0; i<files.length; i++) {
-    $fileList = $fileList + `<li><a href="/?id=${files[i]}">${files[i]}</a></li>`;
-  }
-
-  $fileList = $fileList + "</ol>";
-  return $fileList;
-}
-
+var template = require('./lib/template.js');
 
 var app = http.createServer((request, response)=> {
   var _url = request.url;
@@ -62,10 +22,12 @@ var app = http.createServer((request, response)=> {
   
   const resHTML = (title, pCrTemp, pUpTemp, pDelTemp, pDescription)=> {
     fs.readdir('./data', 'utf8', (err, files)=> {
-      fs.readFile('./data/' + queryData.id, 'utf8', (err, description)=> {
-        var templete = templeteHTML(title, templeteList(files), pCrTemp, pUpTemp, pDelTemp, `<h2>${title}</h2>${!pDescription?description:pDescription}`);
+      // var filteredId = path.parse(queryData.id).base;
+      var filteredId = path.parse(!queryData.id?'':queryData.id).base;
+      fs.readFile('./data/' + filteredId, 'utf8', (err, description)=> {
+        var html = template.html(title, template.list(files), pCrTemp, pUpTemp, pDelTemp, `<h2>${title}</h2>${!pDescription?description:pDescription}`);
         response.writeHead(200);
-        response.end(templete);
+        response.end(html);
       });
     });
   }
@@ -102,16 +64,17 @@ var app = http.createServer((request, response)=> {
           response.end('create process fail');
         }else {
           fs.readdir('./data', 'utf8', (err, files)=> {
-            var templete = templeteHTML(title, templeteList(files), '', '', `<h2>${title}</h2>${description}`);
+            var html = template.html(title, template.list(files), '', '', `<h2>${title}</h2>${description}`);
             response.writeHead(200);
-            response.end(templete);
+            response.end(html);
           });
         }
       });
     }); 
   }else if(pathName === '/update') {
     var title = queryData.id;
-    fs.readFile('./data/' + title, 'utf8', (err, description)=> {
+    var filteredId = path.parse(!queryData.id?'':queryData.id).base;
+    fs.readFile('./data/' + filteredId, 'utf8', (err, description)=> {
       var $formHTML = `
         <form action="http://localhost:3000/update_process" method="post">
           <input type="hidden" name="id" value="${title}"/>
@@ -145,9 +108,9 @@ var app = http.createServer((request, response)=> {
               response.end('update process writefile fail');
             }else {
               fs.readdir('./data', 'utf8', (err, files)=> {
-                var templete = templeteHTML(title, templeteList(files), $create, $update, $delete, `<h2>${title}</h2>${description}`);
+                var html = template.html(title, template.list(files), $create, $update, $delete, `<h2>${title}</h2>${description}`);
                 response.writeHead(200);
-                response.end(templete);
+                response.end(html);
               });
             }
           });
